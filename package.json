@@ -4,7 +4,6 @@
   "description": "Apple Pay PoC: merchant validation with .p12 + decryption using @madskunker/apple-pay-decrypt",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
   },
   "engines": {
     "node": ">=18"
