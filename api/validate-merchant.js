@@ -7,7 +7,7 @@ const CERTS_DIR = path.join(process.cwd(), 'certs');
 const MERCHANT_P12_PATH = path.join(CERTS_DIR, 'merchant_identity.p12');
 const MERCHANT_P12_PASSWORD = process.env.MERCHANT_P12_PASSWORD || '';
 const MERCHANT_IDENTIFIER = process.env.MERCHANT_IDENTIFIER || 'merchant.com.testingAccount.epg';
-const DOMAIN_NAME = process.env.DOMAIN_NAME || '1651b717e107.ngrok-free.app' || 'apple-pay-poc-zeta.vercel.app';
+const DOMAIN_NAME = process.env.DOMAIN_NAME || 'apple-pay-poc-zeta.vercel.app';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
