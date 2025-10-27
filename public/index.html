@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <title>Apple Pay Decrypt Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    apple-pay-button {
+      --apple-pay-button-width: 150px;
+      --apple-pay-button-height: 40px;
+      --apple-pay-button-border-radius: 3px;
+      --apple-pay-button-padding: 0px 0px;
+      --apple-pay-button-box-sizing: border-box;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Apple Pay Decrypt Demo</h1>
+  <p id="status">Checking Apple Pay availability...</p>
+  <apple-pay-button buttonstyle="black" type="plain" locale="en-US" aria-label="Pay with Apple Pay"
+    @click="verify"></apple-pay-button>
+
+  <script crossorigin src="https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js"></script>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const btn = document.querySelector('apple-pay-button');
+
+    async function init() {
+      if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
+        statusEl.textContent = 'Apple Pay available';
+        btn.style.display = 'inline-block';
+      } else {
+        statusEl.textContent = 'Apple Pay not available on this device/browser';
+      }
+    }
+
+    btn.addEventListener('click', async () => {
+      const paymentRequest = {
+        countryCode: 'US',
+        currencyCode: 'USD',
+        supportedNetworks: ['visa', 'masterCard', 'amex'],
+        merchantCapabilities: ['supports3DS'],
+        total: { label: 'Demo Shop', amount: '1.00' }
+      };
+
+      const session = new ApplePaySession(3, paymentRequest);
+
+      session.onvalidatemerchant = async (event) => {
+        try {
+          const resp = await fetch('/validate-merchant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ validationURL: event.validationURL })
+          });
+          if (!resp.ok) throw new Error('merchant validation failed');
+          const merchantSession = await resp.json();
+          session.completeMerchantValidation(merchantSession);
+        } catch (err) {
+          console.error(err);
+          session.abort();
+          alert('Merchant validation failed. Check server logs.');
+        }
+      };
+
+      session.onpaymentauthorized = async (event) => {
+        const payment = event.payment;
+        try {
+          const resp = await fetch('/process-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payment })
+          });
+          const result = await resp.json();
+          if (resp.ok && result.success) {
+            session.completePayment(ApplePaySession.STATUS_SUCCESS);
+            alert('Payment processed (demo).');
+          } else {
+            session.completePayment(ApplePaySession.STATUS_FAILURE);
+            alert('Payment failed on server.');
+          }
+        } catch (err) {
+          console.error(err);
+          session.completePayment(ApplePaySession.STATUS_FAILURE);
+        }
+      };
+
+      session.begin();
+    });
+
+    init();
+  </script>
+</body>
+
+</html>
