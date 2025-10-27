@@ -58,7 +58,7 @@
 
       session.onvalidatemerchant = async (event) => {
         try {
-          const resp = await fetch('/validate-merchant', {
+          const resp = await fetch('/api/validate-merchant', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ validationURL: event.validationURL })
@@ -76,7 +76,7 @@
       session.onpaymentauthorized = async (event) => {
         const payment = event.payment;
         try {
-          const resp = await fetch('/process-payment', {
+          const resp = await fetch('/api/process-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ payment })
