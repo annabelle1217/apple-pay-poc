@@ -1,4 +1,4 @@
-import { decrypt } from '@madskunker/apple-pay-decrypt';
+import applePayDecrypt from '@madskunker/apple-pay-decrypt';
 import fs from 'fs';
 import path from 'path';
 
@@ -6,6 +6,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
+    const payment = req.body.payment;
+
+    // Load PEM files (local or from base64 env vars)
     const keyPath = process.env.PAYMENT_KEY_B64
       ? (() => {
           const tmpKey = path.join('/tmp', 'payment_key.pem');
@@ -22,17 +25,15 @@ export default async function handler(req, res) {
         })()
       : path.join(process.cwd(), 'certs', 'payment_cert.pem');
 
-    const token = req.body.token;
-
-    const decrypted = decrypt({
-      key: keyPath,
-      cert: certPath,
-      token,
+    const decrypted = applePayDecrypt.decrypt({
+      paymentData: payment.token.paymentData,
+      certificate: certPath,
+      privateKey: keyPath,
     });
 
-    res.status(200).json(decrypted);
+    res.status(200).json({ success: true, decrypted });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Payment decryption failed' });
+    console.error('Payment decryption failed:', err);
+    res.status(500).json({ error: 'Payment decryption failed', detail: err.message });
   }
 }

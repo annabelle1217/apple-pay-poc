@@ -11,8 +11,6 @@ export default async function handler(req, res) {
     if (!validationURL) return res.status(400).json({ error: 'Missing validationURL' });
 
     console.log('Loading merchant identity certificate...', process.env.MERCHANT_P12_B64 ? '(from env var)' : '(from file)');
-    console.log('process.env.MERCHANT_P12_B64', process.env.MERCHANT_P12_B64)
-    console.log('P12 size:', process.env.MERCHANT_P12_B64.length);
 
     // --- Load merchant identity certificate (.p12) ---
     const p12Buffer = process.env.MERCHANT_P12_B64
