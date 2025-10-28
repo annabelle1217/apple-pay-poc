@@ -2,3 +2,5 @@ node_modules/
 certs/
 .env
 npm-debug.log
+
+.vercel
