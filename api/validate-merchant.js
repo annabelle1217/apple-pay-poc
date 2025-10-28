@@ -1,35 +1,42 @@
+import axios from 'axios';
 import fs from 'fs';
+import https from 'https';
 import path from 'path';
-import { validateMerchantSession } from '@madskunker/apple-pay-decrypt';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    // Detect if running on Vercel (env var present)
-    const p12Path = process.env.MERCHANT_P12_B64
-      ? (() => {
-          const tmpPath = path.join('/tmp', 'merchant_identity.p12');
-          fs.writeFileSync(tmpPath, Buffer.from(process.env.MERCHANT_P12_B64, 'base64'));
-          return tmpPath;
-        })()
-      : path.join(process.cwd(), 'certs', 'merchant_identity.p12');
+    const { validationURL } = req.body;
+    if (!validationURL) return res.status(400).json({ error: 'Missing validationURL' });
 
-    const password = process.env.MERCHANT_P12_PASSWORD || '';
+    // --- Load merchant identity certificate (.p12) ---
+    const p12Buffer = process.env.MERCHANT_P12_B64
+      ? Buffer.from(process.env.MERCHANT_P12_B64, 'base64')
+      : fs.readFileSync(path.join(process.cwd(), 'certs', 'merchant_identity.p12'));
 
-    const validationURL = req.body.validationURL;
-
-    const merchantSession = await validateMerchantSession({
-      p12: p12Path,
-      password,
-      merchantIdentifier: process.env.MERCHANT_IDENTIFIER || 'merchant.com.testingAccount.epg',
-      validationURL,
-      domainName: process.env.DOMAIN_NAME || 'apple-pay-poc-zeta.vercel.app',
+    const httpsAgent = new https.Agent({
+      pfx: p12Buffer,
+      passphrase: process.env.MERCHANT_P12_PASSWORD,
     });
 
-    res.status(200).json(merchantSession);
+    // --- Construct request body ---
+    const payload = {
+      merchantIdentifier: process.env.MERCHANT_IDENTIFIER,
+      displayName: 'Apple Pay PoC',
+      initiative: 'web',
+      initiativeContext: process.env.DOMAIN_NAME,
+    };
+
+    // --- Send request to Apple’s validation URL ---
+    const response = await axios.post(validationURL, payload, {
+      httpsAgent,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    res.status(200).json(response.data);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Merchant validation failed' });
+    console.error('Merchant validation failed:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Merchant validation failed', detail: err.message });
   }
 }
