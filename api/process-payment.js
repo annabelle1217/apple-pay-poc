@@ -12,6 +12,8 @@ export default async function handler(req, res) {
         if (!payment || !payment.token) {
             console.log('🚨 Payment object missing or malformed:', payment);
             return res.status(400).json({ error: 'Payment or token missing' });
+        } else {
+            console.log('✅ Payment token received', payment.token?.paymentData);
         }
 
         // Load cert and key (from env base64 or local files)
@@ -39,7 +41,7 @@ export default async function handler(req, res) {
         const token = new PaymentToken(payment.token.paymentData);
         const decrypted = token.decrypt(certPem, privatePem);
 
-         console.log('🔓 Decrypted token:', decrypted);
+        console.log('🔓 Decrypted token:', decrypted);
 
         res.status(200).json({ success: true, decrypted });
     } catch (err) {
