@@ -1,4 +1,4 @@
-import applePayDecrypt from '@madskunker/apple-pay-decrypt';
+import PaymentToken from '@madskunker/apple-pay-decrypt';
 import fs from 'fs';
 import path from 'path';
 
@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   try {
     const payment = req.body.payment;
 
-    // Load PEM files (local or from base64 env vars)
+    // Load cert and key (from env base64 or local files)
     const keyPath = process.env.PAYMENT_KEY_B64
       ? (() => {
           const tmpKey = path.join('/tmp', 'payment_key.pem');
@@ -25,11 +25,13 @@ export default async function handler(req, res) {
         })()
       : path.join(process.cwd(), 'certs', 'payment_cert.pem');
 
-    const decrypted = applePayDecrypt.decrypt({
-      paymentData: payment.token.paymentData,
-      certificate: certPath,
-      privateKey: keyPath,
-    });
+    // Read file contents
+    const certPem = fs.readFileSync(certPath, 'utf8');
+    const privatePem = fs.readFileSync(keyPath, 'utf8');
+
+    // Decrypt Apple Pay token
+    const token = new PaymentToken(payment.token.paymentData);
+    const decrypted = token.decrypt(certPem, privatePem);
 
     res.status(200).json({ success: true, decrypted });
   } catch (err) {
