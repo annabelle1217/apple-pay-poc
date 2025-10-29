@@ -9,7 +9,7 @@
 * **GitHub Repository:** [apple-pay-poc](https://github.com/annabelle1217/apple-pay-poc)
 * **Deployed POC App:** [apple-pay-poc-zeta.vercel.app](https://apple-pay-poc-zeta.vercel.app/)  
   ⚠️ Note: The deployed app only works with Apple accounts added to my tester list. If you are not added, the Apple Pay flow (payment sheet) will not complete. You can still fork the repo and deploy your own version with your own tester accounts.
-
+![apple_pay_poc](https://github.com/user-attachments/assets/159bcb95-866c-41ff-b217-391e9b7a9be5)
 
 This repository demonstrates:
 
