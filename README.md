@@ -49,46 +49,76 @@ You’ll need two certificates and a verified domain before deployment:
 
 ---
 
-## 🍏 2️⃣ Merchant Verification (OpenSSL 3 Fix)
+## 🍏 2️⃣ Merchant Verification (OpenSSL 3 Compatibility)
+
+Node.js with OpenSSL 3 requires certificates to use modern AES-256 encryption.
+If your `.p12` was exported from macOS Keychain, re-export it using the steps below.
 
 ```bash
-# Extract cert and key using legacy provider
+# Extract certificate and key using legacy provider
 openssl pkcs12 -in apple_pay.p12 -clcerts -nokeys -out cert.pem -legacy
 openssl pkcs12 -in apple_pay.p12 -nocerts -nodes -out key.pem -legacy
 
-# Export new AES-256 .p12
+# Re-export a new AES-256 .p12 compatible with Node/OpenSSL 3
 openssl pkcs12 -export -inkey key.pem -in cert.pem \
   -out merchant_identity.p12 -name "merchant identity test" \
   -passout pass:YourPassword123!
 ```
 
-> Move `legacy.dll` if needed:
+> 💡 If OpenSSL reports a missing legacy provider, move
+> `legacy.dll` to:
 > `C:\Program Files\OpenSSL\lib\ossl-modules\legacy.dll`
+
+After exporting, place the new file here:
+
+```
+certs/merchant_identity.p12
+```
 
 ---
 
 ## 🔐 3️⃣ Apple Pay Token Decryption
 
-For POC, use [`@madskunker/apple-pay-decrypt`](https://www.npmjs.com/package/@madskunker/apple-pay-decrypt).
+For proof-of-concept, we use [`@madskunker/apple-pay-decrypt`](https://www.npmjs.com/package/@madskunker/apple-pay-decrypt).
+For production, implement your own decryption logic per Apple’s
+[Payment Token Format Reference](https://developer.apple.com/documentation/apple_pay_on_the_web/applepaypaymenttoken).
 
-Convert `.p12` → `.pem`:
+Convert your `.p12` → `.pem` for decryption:
 
 ```bash
 openssl x509 -inform DER -outform PEM -in apple_pay.cer -out certPem.pem
 openssl pkcs12 -in key.p12 -out privatePem.pem -nocerts -nodes -legacy
 ```
 
-Upload PEM files to your deployed application.
+Then, move the PEMs to:
+
+```
+certs/payment_key.pem
+certs/payment_cert.pem
+```
+
+These files are used by `convert-to-base64.js`:
+
+```js
+// List of files to convert
+const files = [
+  'certs/merchant_identity.p12',
+  'certs/payment_key.pem',
+  'certs/payment_cert.pem'
+];
+```
 
 ---
 
 ## 🧩 4️⃣ Environment Variables (Vercel)
 
+Convert your local certs to Base64 for Vercel environment variables:
+
 ```bash
 node convert-to-base64.js
 ```
 
-Set these in Vercel:
+Set the following in your Vercel project settings:
 
 * `MERCHANT_P12_B64`
 * `PAYMENT_KEY_B64`
@@ -97,7 +127,8 @@ Set these in Vercel:
 * `MERCHANT_IDENTIFIER`
 * `DOMAIN_NAME`
 
-> Local `.p12` / `.pem` files are **not required**.
+> 💡 Once deployed, local `.p12` / `.pem` files are **not required** —
+> they’re read from environment variables directly.
 
 ---
 
