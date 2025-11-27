@@ -1,6 +1,17 @@
+// --- Patch for util.isBuffer (Node 20+/AWS Lambda) ---
+
 import PaymentToken from '@madskunker/apple-pay-decrypt';
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
+
+if (!util.isBuffer) {
+  util.isBuffer = Buffer.isBuffer;
+}
+
+
+
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
