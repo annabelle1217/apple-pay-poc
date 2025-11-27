@@ -1,17 +1,24 @@
-// --- Patch for util.isBuffer (Node 20+/AWS Lambda) ---
+// Node 20+ util polyfills for legacy crypto libs
 
 import PaymentToken from '@madskunker/apple-pay-decrypt';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
-if (!util.isBuffer) {
-  util.isBuffer = Buffer.isBuffer;
+const polyfills = {
+  isBuffer: Buffer.isBuffer,
+  isString: (x) => typeof x === 'string' || x instanceof String,
+  isObject: (x) => x !== null && typeof x === 'object',
+  isNumber: (x) => typeof x === 'number' && !isNaN(x),
+  isNull: (x) => x === null,
+  isUndefined: (x) => x === undefined
+};
+
+for (const key in polyfills) {
+  if (!util[key]) {
+    util[key] = polyfills[key];
+  }
 }
-
-
-
-
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
