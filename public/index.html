@@ -49,8 +49,15 @@
       const paymentRequest = {
         countryCode: 'US',
         currencyCode: 'USD',
-        supportedNetworks: ['visa', 'masterCard', 'amex'],
-        merchantCapabilities: ['supports3DS'],
+        supportedNetworks: [
+          'visa',
+          'masterCard',
+          'amex',
+          'jcb',
+          'discover',
+          'chinaUnionPay'
+        ],
+        merchantCapabilities: ['supports3DS', 'supportsEMV'],
         total: { label: 'Demo Shop', amount: '1.00' }
       };
 

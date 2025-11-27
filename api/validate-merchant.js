@@ -35,6 +35,7 @@ export default async function handler(req, res) {
       httpsAgent,
       headers: { 'Content-Type': 'application/json' },
     });
+    console.log('✅ Merchant validation successful');
 
     res.status(200).json(response.data);
   } catch (err) {
