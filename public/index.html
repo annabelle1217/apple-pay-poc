@@ -58,7 +58,8 @@
           'chinaUnionPay'
         ],
         merchantCapabilities: ['supports3DS', 'supportsEMV'],
-        total: { label: 'Demo Shop', amount: '1.00' }
+        total: { label: 'Demo Shop', amount: '1.00' },
+        requiredShippingContactFields: ["name", "email"],
       };
 
       const session = new ApplePaySession(3, paymentRequest);
