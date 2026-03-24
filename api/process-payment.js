@@ -24,7 +24,10 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
   try {
-    console.log('Processing payment decryption request...', req.body);
+    console.log(
+      'Processing payment decryption request...',
+      util.inspect(req.body, { depth: null, colors: false })
+    );
     const payment = req.body.payment;
 
     if (!payment || !payment.token) {
